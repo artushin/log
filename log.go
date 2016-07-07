@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"golang.org/x/net/context"
 	"os"
+	"strings"
 )
 
 const contextKey = "logasaurusrex"
@@ -35,14 +36,19 @@ func newLogger() logrus.FieldLogger {
 	return log
 }
 
-func GinLog() gin.HandlerFunc {
+func Gin() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		l := newLogger()
 		log := l.WithField("handler", c.HandlerName())
 		for _, param := range c.Params {
-			log.Data[fmt.Sprintf("qparam-%s", param.Key)] = param.Value
+			log.Data[fmt.Sprintf("urlParam-%s", param.Key)] = param.Value
+		}
+		c.Request.ParseForm()
+		for key, params := range c.Request.Form {
+			log.Data[fmt.Sprintf("queryParam-%s", key)] = strings.Join(params, ",")
 		}
 		c.Set(contextKey, log)
+		c.Next()
 	}
 }
 
